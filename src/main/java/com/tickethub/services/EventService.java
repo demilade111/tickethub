@@ -7,21 +7,26 @@ import com.tickethub.dto.eventDto.UpdateEventRequest;
 import com.tickethub.entity.Event;
 import com.tickethub.entity.User;
 import com.tickethub.entity.Venue;
+import com.tickethub.enums.EventCategory;
 import com.tickethub.enums.EventStatus;
 import com.tickethub.exception.ResourceNotFoundException;
 import com.tickethub.mapper.EventMapper;
 import com.tickethub.repository.EventRepository;
 import com.tickethub.repository.UserRepository;
 import com.tickethub.repository.venueRepository;
+import com.tickethub.specification.EventSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Service
@@ -77,6 +82,29 @@ public class EventService {
     public Page<EventSummaryResponse> getAllPublishedEvents(Pageable pageable) {
         return eventRepository.findByStatus(EventStatus.PUBLISHED, pageable)
                 .map(eventMapper::toSummaryResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<EventSummaryResponse> searchAndFilterEvents(
+            String searchQuery,
+            EventCategory category,
+            String city,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            Pageable pageable) {
+        
+        log.debug("Searching events with filters - query: {}, category: {}, city: {}, startDate: {}, endDate: {}, minPrice: {}, maxPrice: {}",
+                searchQuery, category, city, startDate, endDate, minPrice, maxPrice);
+        
+        Specification<Event> spec = EventSpecification.combineSpecifications(
+                searchQuery, category, city, startDate, endDate, minPrice, maxPrice);
+        
+        Page<Event> events = eventRepository.findAll(spec, pageable);
+        
+        log.info("Found {} events matching search criteria", events.getTotalElements());
+        return events.map(eventMapper::toSummaryResponse);
     }
 
     @Transactional
