@@ -39,3 +39,8 @@ application-local.properties
 
 ### Project Documentation ###
 PROJECT_DESCRIPTION.md
+ARCHITECTURE_SUMMARY.md
+ARCHITECTURE.md
+INTEGRATION_FIXES.md
+INTERVIEW_DEEP_DIVE.md
+INTERVIEW_QUESTIONS.md
